@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -29,40 +30,36 @@ public class AuthServiceImpl implements AuthService{
                            RoleRepository roleRepository,
                            PasswordEncoder passwordEncoder) {
         this.authenticationManager = authenticationManager;
-        this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
-        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     public String login(LoginDto loginDto) {
+        Authentication authentication=authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginDto.getUsernameOrEmail(), loginDto.getPassword()));
+        
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        org.springframework.security.core.Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-            loginDto.getUsernameOrEmail(), loginDto.getPassword()));
-
-    SecurityContextHolder.getContext().setAuthentication(authentication);
-
-    return "User Logged-in successfully!.";
+        return "user logged-in successfully";
     }
 
     @Override
     public String register(RegisterDto registerDto) {
-
-
-        User user = new User();
-        user.setName(registerDto.getName());
-        user.setUsername(registerDto.getUsername());
-        user.setEmail(registerDto.getEmail());
-        user.setPassword(passwordEncoder.encode(registerDto.getPassword()));
-
-        Set<Role> roles = new HashSet<>();
-        Role userRole = (Role) roleRepository.findByName("ROLE_USER");
-        roles.add(userRole);
-        user.setRoles(roles);
-
-        userRepository.save(user);
-
-        return "User registered successfully!.";
+                
+                User user = new User();
+                user.setName(registerDto.getName());
+                user.setUsername(registerDto.getUsername());
+                user.setEmail(registerDto.getEmail());
+                user.setPassword(passwordEncoder.encode(registerDto.getPassword()));
+        
+                Set<Role> roles = new HashSet<>();
+                Role userRole = roleRepository.findByName("ROLE_USER").get();
+                roles.add(userRole);
+                user.setRoles(roles);
+        
+                userRepository.save(user);
+        
+                return "User registered successfully!.";
     }
+
+    
     
 }
